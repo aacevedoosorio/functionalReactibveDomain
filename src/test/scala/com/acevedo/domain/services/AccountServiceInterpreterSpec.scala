@@ -3,7 +3,7 @@ package com.acevedo.domain.services
 import java.util.Date
 
 import com.acevedo.domain.Balance.Amount
-import com.acevedo.domain.{Balance, CheckingAccount}
+import com.acevedo.domain.{Balance, CheckingAccount, MoneyBalance}
 import org.scalacheck.Prop.forAll
 import org.scalacheck.{Gen, _}
 import org.scalatest._

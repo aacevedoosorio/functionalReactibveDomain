@@ -5,7 +5,7 @@ import java.util.{Calendar, Date}
 import com.acevedo.domain.Balance.Amount
 import com.acevedo.domain.fp.Types.Safe
 import com.acevedo.domain.services.AccountService
-import com.acevedo.domain.{Account, Balance, CheckingAccount}
+import com.acevedo.domain.{Account, Balance, CheckingAccount, MoneyBalance}
 import scalaz.{-\/, \/-}
 
 object AccountServiceInterpreter extends AccountService[CheckingAccount] {

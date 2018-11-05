@@ -1,8 +1,7 @@
-import com.acevedo.domain.Balance.Amount
 import com.acevedo.domain.fp.Types.Safe
 import com.acevedo.domain.repositories.AccountRepository
-import com.acevedo.domain.services.interpreter.AccountServiceWithRepo
-import com.acevedo.domain.{Balance, CheckingAccount}
+import com.acevedo.domain.services.AccountServiceWithRepo
+import com.acevedo.domain.{MoneyBalance, CheckingAccount}
 
 object App {//extends App with AccountServiceWithRepo[CheckingAccount, Amount, Balance] {
   /*def op(no: String) =

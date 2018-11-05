@@ -3,8 +3,9 @@ package com.acevedo.domain
 import java.util.{Calendar, Date}
 
 import com.acevedo.domain.Balance.Amount
-import com.acevedo.domain.fp.Types.{Safe, SafeAccount}
+import com.acevedo.domain.fp.Types.{Safe, SafeAccount, Valid, ValidAccount}
 import scalaz.{-\/, \/, \/-}
+import scalaz.syntax.applicative._
 
 sealed trait Account {
   def no: String
@@ -25,7 +26,7 @@ object Account {
     for {
       _ <- nameCheck(no, name)
       _ <- openDateCheck(dateOfOpen)
-      _ <- closDateCheck(dateOfOpen, dateOfClose)
+      _ <- closeDateCheck(dateOfOpen, dateOfClose)
     } yield CheckingAccount(no, name, dateOfOpen, dateOfClose, balance)
   }
 
@@ -33,11 +34,20 @@ object Account {
     for {
       _ <- nameCheck(no, name)
       _ <- openDateCheck(dateOfOpen)
-      _ <- closDateCheck(dateOfOpen, dateOfClose)
+      _ <- closeDateCheck(dateOfOpen, dateOfClose)
+      _ <- interestRateCheck(rateOfInterest)
     } yield SavingsAccount(no, name, rateOfInterest, dateOfOpen, dateOfClose, balance)
   }
 
-  private def nameCheck(no: String, name: String): Safe[(String, String)] =
+  def savingsAccountWithValidation(no: String, name: String, rateOfInterest: Amount, dateOfOpen: Date, dateOfClose: Option[Date], balance: Balance): ValidAccount = {
+    (nameCheck(no, name).validationNel |@|
+      openDateCheck(dateOfOpen).validationNel |@|
+      closeDateCheck(dateOfOpen, dateOfClose).validationNel |@|
+      interestRateCheck(rateOfInterest).validationNel) ((_, _, _, _) => SavingsAccount(no, name, rateOfInterest, dateOfOpen, dateOfClose, balance))
+
+  }
+
+    private def nameCheck(no: String, name: String): Safe[(String, String)] =
     if (no.isEmpty || name.isEmpty) {
       -\/(new Exception("Missing basic info to open an account"))
     } else {
@@ -52,11 +62,38 @@ object Account {
     }
   }
 
-  private def closDateCheck(dateOfOpen: Date, dateOfClose: Option[Date]): Safe[(Date, Option[Date])] = {
+  private def closeDateCheck(dateOfOpen: Date, dateOfClose: Option[Date]): Safe[(Date, Option[Date])] = {
     if (dateOfClose.getOrElse(today) before  dateOfOpen) {
       -\/(new Exception("Closing date can't be before than opening"))
     } else {
       \/-((dateOfOpen, dateOfClose))
     }
   }
+
+  private def interestRateCheck(ir: Amount): Safe[Amount] = {
+    if (ir < BigDecimal(0)) {
+      -\/(new Exception("Interest rate should be greater than 0"))
+    } else {
+      \/-(ir)
+    }
+  }
+}
+
+trait AccountValidation {
+   def validateAccount(no: String, name: String): Valid[(String, String)]
+  def validateOpenDate(openDate: Date): Valid[Date]
+  def validateOpenCloseDate(openDate: Date, closeDate: Option[Date]): Valid[(Date, Option[Date])]
+  def validateRateOfInterest(ir: Amount): Valid[Amount]
+
+  def savingsAccount(no: String,
+          name: String,
+          rateOfInterest: Amount,
+          dateOfOpen: Date,
+          dateOfClose: Option[Date],
+          balance: Balance): Valid[SavingsAccount] = (
+      validateAccount(no, name) |@|
+      validateOpenDate(dateOfOpen) |@|
+      validateOpenCloseDate(dateOfOpen, dateOfClose) |@|
+      validateRateOfInterest(rateOfInterest)
+    ) ( (_, _, _, _) => SavingsAccount(no, name, rateOfInterest, dateOfOpen, dateOfClose, balance))
 }
